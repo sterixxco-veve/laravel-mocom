@@ -13,7 +13,7 @@
     </style>
 </head>
 
-<body class="bg-[#FDFDFD] text-[#1E1E24] font-sans antialiased" x-data="{ currentTab: 'monitor' }">
+<body class="bg-[#FDFDFD] text-[#1E1E24] font-sans antialiased" x-data="{ currentTab: 'staff' }">
 
     <nav class="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-3">
@@ -63,33 +63,45 @@
             <div class="bg-rose-50 border border-rose-100 p-5 rounded-2xl shadow-sm">
                 <span class="text-xs font-bold text-rose-500 uppercase tracking-wider block mb-1">Overworked Kritis
                     (&gt; 45 Jam)</span>
-                <span class="text-3xl font-black text-rose-700">1 Orang</span>
+                <span class="text-3xl font-black text-rose-700">{{ $workloadData['overworked'] }} Orang</span>
             </div>
             <div class="bg-slate-50 border border-slate-100 p-5 rounded-2xl shadow-sm">
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Normal (35 - 40
                     Jam)</span>
-                <span class="text-3xl font-black text-slate-700">3 Orang</span>
+                <span class="text-3xl font-black text-slate-700">{{ $workloadData['normal'] }} Orang</span>
             </div>
             <div class="bg-sky-50 border border-sky-100 p-5 rounded-2xl shadow-sm">
                 <span class="text-xs font-bold text-sky-500 uppercase tracking-wider block mb-1">Underworked (&lt; 30
                     Jam)</span>
-                <span class="text-3xl font-black text-sky-700">0 Orang</span>
+                <span class="text-3xl font-black text-sky-700">{{ $workloadData['underworked'] }} Orang</span>
             </div>
         </div>
 
         <div class="flex flex-wrap justify-between items-center border-b border-gray-100 pb-4 mb-8 mt-4 gap-4">
             <div class="flex flex-wrap gap-2">
+                <button @click="currentTab = 'staff'"
+                    :class="currentTab === 'staff' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
+                        'text-gray-400 hover:text-gray-700 border-transparent'"
+                    class="text-sm font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer">
+                    👥 Daftar Akun Staf
+                </button>
                 <button @click="currentTab = 'monitor'"
                     :class="currentTab === 'monitor' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
                         'text-gray-400 hover:text-gray-700 border-transparent'"
                     class="text-sm font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer">
-                    📋 Monitor Staf &amp; Workload
+                    📅 Monitor Shift &amp; Log Absen
                 </button>
                 <button @click="currentTab = 'ai'"
                     :class="currentTab === 'ai' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
                         'text-gray-400 hover:text-gray-700 border-transparent'"
                     class="text-sm font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer">
                     🤖 Validasi Gemini AI Izin
+                </button>
+                <button @click="currentTab = 'master_shift'"
+                    :class="currentTab === 'master_shift' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
+                        'text-gray-400 hover:text-gray-700 border-transparent'"
+                    class="text-sm font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer">
+                    ⚙️ Master Pengaturan Shift
                 </button>
             </div>
 
@@ -99,9 +111,9 @@
             </a>
         </div>
 
-        <div x-show="currentTab === 'monitor'" x-transition>
+        <div x-show="currentTab === 'staff'" x-transition>
             <div class="flex justify-between items-center mb-6">
-                <h4 class="text-lg font-black text-gray-800">Daftar Anggota / Staff Terdaftar</h4>
+                <h4 class="text-lg font-black text-gray-800">Daftar Anggota Terdaftar</h4>
                 <a href="{{ route('admin.add_staff') }}"
                     class="bg-[#4361EE] text-white font-bold text-sm px-5 py-3 rounded-xl hover:bg-blue-700 transition shadow-sm">
                     ➕ Daftarkan Staff Baru
@@ -117,7 +129,7 @@
                             <th class="p-4">Nama Lengkap</th>
                             <th class="p-4">Username</th>
                             <th class="p-4">Alamat Email</th>
-                            <th class="p-4">Role ID</th>
+                            <th class="p-4">Role Kedudukan</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
@@ -128,8 +140,8 @@
                                 <td class="p-4 text-gray-500">@​{{ $staff['username'] }}</td>
                                 <td class="p-4">{{ $staff['email'] }}</td>
                                 <td class="p-4">
-                                    <span class="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full font-bold">
-                                        Role {{ $staff['role_id'] }}
+                                    <span class="bg-blue-50 text-[#4361EE] text-xs px-2.5 py-1 rounded-full font-bold">
+                                        {{ $staff['role_id'] == 1 ? 'Admin' : 'Asisten / Lapangan' }}
                                     </span>
                                 </td>
                             </tr>
@@ -145,6 +157,259 @@
             </div>
         </div>
 
+        <div x-show="currentTab === 'monitor'" x-transition class="space-y-10">
+
+            <div>
+                <h4 class="text-lg font-black text-gray-800 mb-4">Akumulasi Jam Kerja Riil (7 Hari Terakhir)</h4>
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <th class="p-4 pl-6">ID Staff</th>
+                                <th class="p-4">Nama Lengkap</th>
+                                <th class="p-4 text-center">Beban Kerja Mingguan</th>
+                                <th class="p-4">Status Kepadatan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
+                            @forelse($workloadData['details'] as $staff)
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="p-4 pl-6 font-mono text-gray-400">#{{ $staff['id'] }}</td>
+                                    <td class="p-4 text-gray-900 font-bold">{{ $staff['full_name'] }}</td>
+                                    <td class="p-4 text-center font-black text-gray-800">{{ $staff['total_hours'] }}
+                                        Jam</td>
+                                    <td class="p-4">
+                                        @if ($staff['total_hours'] > 45)
+                                            <span
+                                                class="bg-rose-100 text-rose-700 text-xs px-2.5 py-1 rounded-full font-bold">🔴
+                                                Overworked</span>
+                                        @elseif($staff['total_hours'] >= 35 && $staff['total_hours'] <= 45)
+                                            <span
+                                                class="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-1 rounded-full font-bold">🟢
+                                                Normal</span>
+                                        @else
+                                            <span
+                                                class="bg-sky-100 text-sky-700 text-xs px-2.5 py-1 rounded-full font-bold">🔵
+                                                Underworked</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="p-8 text-center text-gray-400">Belum ada data beban jam
+                                        kerja.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="flex h-2 w-2 relative">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <h4 class="text-lg font-black text-gray-800">Log Aktivitas Kehadiran Staf (Hari Ini)</h4>
+                </div>
+
+                <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                <th class="p-4 pl-6">Nama Staff</th>
+                                <th class="p-4">Shift Tugas</th>
+                                <th class="p-4 text-center">Jam Check-In</th>
+                                <th class="p-4 text-center">Jam Check-Out</th>
+                                <th class="p-4">Status Lapangan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
+                            @forelse($todayAttendanceLogs as $log)
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="p-4 pl-6">
+                                        <div class="font-bold text-gray-900">{{ $log['full_name'] }}</div>
+                                        <div class="text-[11px] text-gray-400 font-mono">@​{{ $log['username'] }}
+                                        </div>
+                                    </td>
+                                    <td class="p-4 text-gray-500 font-semibold">{{ $log['shift_title'] }}</td>
+                                    <td class="p-4 text-center font-mono text-emerald-600 font-bold bg-emerald-50/30">
+                                        {{ $log['jam_masuk'] }}</td>
+                                    <td
+                                        class="p-4 text-center font-mono {{ $log['jam_keluar'] === 'Belum Pulang' ? 'text-amber-600 font-bold bg-amber-50/30' : 'text-slate-600' }}">
+                                        {{ $log['jam_keluar'] }}
+                                    </td>
+                                    <td class="p-4">
+                                        @if ($log['jam_keluar'] === 'Belum Pulang')
+                                            <span
+                                                class="bg-emerald-100 text-emerald-700 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">⚡
+                                                On Duty</span>
+                                        @else
+                                            <span
+                                                class="bg-gray-100 text-gray-600 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">🏁
+                                                Finished</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-gray-400 italic font-normal">
+                                        Belum ada aktivitas check-in dari staf manapun pada hari ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="currentTab === 'master_shift'" x-cloak x-transition x-data="{ openCreate: false, sTitle: '', sDesc: '', sStart: '', sEnd: '', sLoc: '', isSaving: false }">
+
+            <div class="flex justify-between items-center mb-6 mt-4">
+                <div>
+                    <h4 class="text-lg font-black text-gray-800">Konfigurasi Pola Operasional Shift</h4>
+                    <p class="text-xs text-gray-400">Sesuaikan rentang waktu tugas kerja, penempatan area, dan
+                        deskripsi jobdesk internal perusahaan secara dinamis.</p>
+                </div>
+                <button @click="openCreate = !openCreate"
+                    class="bg-[#4361EE] text-white font-bold text-sm px-5 py-3 rounded-xl hover:bg-blue-700 transition shadow-sm cursor-pointer">
+                    <span x-text="openCreate ? '❌ Batal' : '➕ Buat Konfigurasi Shift Baru'"></span>
+                </button>
+            </div>
+
+            <div x-show="openCreate" x-transition
+                class="bg-slate-50 border border-gray-100 p-6 rounded-2xl mb-6 max-w-2xl shadow-inner">
+                <form
+                    @submit.prevent="
+                    isSaving = true;
+                    fetch('http://127.0.0.1:3000/api/insertSchedules', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            company_id: {{ session('company_id') }},
+                            created_by: {{ session('user_id') ?? 1 }},
+                            title: sTitle,
+                            description: sDesc,
+                            start_time: sStart,
+                            end_time: sEnd,
+                            location: sLoc
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        isSaving = false;
+                        if(data.id) {
+                            alert('Berhasil membuat blueprint master shift baru!');
+                            window.location.reload();
+                        } else {
+                            alert('Gagal memproses data.');
+                        }
+                    })
+                    .catch(err => {
+                        isSaving = false;
+                        console.error(err);
+                        alert('Gagal menghubungi REST API database pusat.');
+                    });
+                "
+                    class="space-y-4">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama
+                                Kelompok Shift</label>
+                            <input type="text" x-model="sTitle" placeholder="Contoh: Shift Pagi Reguler" required
+                                class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#4361EE]">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Lokasi /
+                                Area Penugasan</label>
+                            <input type="text" x-model="sLoc" placeholder="Contoh: Lab Komputer Terpadu 3"
+                                class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#4361EE]">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Jam
+                                Masuk Kerja (Check-In)</label>
+                            <input type="time" x-model="sStart" required
+                                class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#4361EE]">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Jam
+                                Pulang Kerja (Check-Out)</label>
+                            <input type="time" x-model="sEnd" required
+                                class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#4361EE]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Catatan
+                            Tugas / Deskripsi Tambahan</label>
+                        <textarea x-model="sDesc" rows="2" placeholder="Tulis rincian deskripsi kerja harian untuk shift terkait..."
+                            class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#4361EE]"></textarea>
+                    </div>
+
+                    <button type="submit" :disabled="isSaving"
+                        class="w-full py-3 bg-[#4361EE] hover:bg-blue-700 text-white font-black rounded-xl text-xs transition uppercase tracking-wider cursor-pointer disabled:opacity-40">
+                        <span x-show="!isSaving">💾 Simpan &amp; Rilis Blueprint Shift</span>
+                        <span x-show="isSaving">Menghitung Jam Kerja &amp; Mengunci Data...</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            <th class="p-4 pl-6 w-[15%]">ID Pola</th>
+                            <th class="p-4 w-[35%]">Nama Pengenal Shift</th>
+                            <th class="p-4 w-[20%]">Lokasi Area</th>
+                            <th class="p-4 text-center w-[15%]">Waktu Tugas</th>
+                            <th class="p-4 text-center w-[15%]">Durasi Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
+                        @forelse($shiftMasters as $shift)
+                            <tr class="hover:bg-slate-50/50 transition">
+                                <td class="p-4 pl-6 font-mono text-gray-400">#SHIFT-0{{ $shift['id'] }}</td>
+                                <td class="p-4">
+                                    <div class="text-gray-900 font-bold">{{ $shift['title'] }}</div>
+                                    @if ($shift['description'])
+                                        <div class="text-[11px] text-gray-400 font-normal italic mt-0.5">
+                                            {{ $shift['description'] }}</div>
+                                    @endif
+                                </td>
+                                <td class="p-4 text-gray-500 font-semibold">📍 {{ $shift['location'] }}</td>
+                                <td class="p-4 text-center font-mono text-blue-600 font-bold bg-blue-50/10">
+                                    {{ $shift['jam_masuk'] }} - {{ $shift['jam_pulang'] }} WIB</td>
+                                <td class="p-4 text-center">
+                                    <span
+                                        class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-bold font-mono">
+                                        {{ $shift['duration_hours'] }} Jam Kerja
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="p-12 text-center text-gray-400 font-medium bg-white">
+                                    Belum ada data blueprint kustomisasi shift kerja harian yang terdaftar untuk
+                                    perusahaan ini.<br>
+                                    <span class="text-xs text-gray-300 font-normal block mt-1">Klik tombol "Buat
+                                        Konfigurasi Shift Baru" untuk merancang tipe baru.</span>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div x-show="currentTab === 'ai'" x-cloak x-transition x-data="{
             selectedIds: [],
             leaveRequests: @js($leaveRequests),
@@ -166,7 +431,6 @@
         
             async runBatchAnalysis() {
                 const cleanIds = Array.from(this.selectedIds);
-        
                 console.log('⚡ Memproses analisis untuk ID murni:', cleanIds);
         
                 if (cleanIds.length === 0) {
@@ -183,22 +447,7 @@
                     this.loadingStates = { ...this.loadingStates };
         
                     try {
-                        // 1. Log objek asli ke konsol untuk memeriksa nama kolom yang benar dari database
-                        console.log(`📦 Struktur data asli untuk ID #${id}:`, targetRequest);
-        
-                        // 2. Deteksi otomatis beberapa kemungkinan nama kolom alasan
-                        let textReason = targetRequest.reason ||
-                            targetRequest.alasan ||
-                            targetRequest.Alasan ||
-                            targetRequest.reason_text ||
-                            '';
-        
-                        // Jika masih tetap kosong, beri pesan peringatan di konsol
-                        if (!textReason) {
-                            console.warn(`⚠️ Peringatan: Kolom alasan tidak ditemukan pada objek ID #${id}. Periksa log struktur data di atas.`);
-                        }
-        
-                        console.log(`🤖 Mengirim alasan ke Express untuk ID #${id}:`, textReason);
+                        let textReason = targetRequest.reason || targetRequest.alasan || targetRequest.Alasan || '';
         
                         let response = await fetch('http://127.0.0.1:3000/api/analyze-leave-request', {
                             method: 'POST',
@@ -207,15 +456,13 @@
                         });
         
                         let data = await response.json();
-                        console.log(`🧠 Respon sukses dari Gemini API untuk ID #${id}:`, data);
-        
                         if (data.success) {
                             this.aiResults[id] = data;
                         } else {
                             this.aiResults[id] = { is_valid: 0, ai_reason: 'Gagal memproses analisis AI.' };
                         }
                     } catch (error) {
-                        console.error('❌ Kegagalan Fetching pada ID ' + id + ':', error);
+                        console.error(error);
                         this.aiResults[id] = { is_valid: 0, ai_reason: 'Koneksi backend gagal terhubung.' };
                     } finally {
                         this.loadingStates[id] = false;
@@ -295,32 +542,24 @@
                         <template x-for="req in leaveRequests" :key="req.id">
                             <tr class="hover:bg-slate-50/40 transition-colors"
                                 :class="selectedIds.includes(req.id) ? 'bg-blue-50/30' : ''">
-
                                 <td class="p-4 text-center">
                                     <input type="checkbox" :value="req.id" x-model="selectedIds"
                                         class="w-4 h-4 text-[#4361EE] focus:ring-[#4361EE] border-gray-300 rounded cursor-pointer">
                                 </td>
-
                                 <td class="p-4">
                                     <div class="font-bold text-gray-900" x-text="req.full_name"></div>
                                     <div class="text-[11px] text-gray-400 font-mono" x-text="'@'+req.username"></div>
                                 </td>
-
                                 <td class="p-4 text-gray-600 italic font-normal text-xs leading-relaxed truncate hover:whitespace-normal"
                                     x-text="req.reason"></td>
-
                                 <td class="p-4 text-center">
                                     <span
                                         class="px-2.5 py-1 text-[10px] font-black tracking-wider rounded-full bg-amber-50 text-amber-600 border border-amber-100"
                                         x-text="req.status"></span>
                                 </td>
-
                                 <td class="p-4 border-l border-gray-50">
                                     <div x-show="!aiResults[req.id] && !loadingStates[req.id]"
-                                        class="text-xs text-gray-300 italic font-normal">
-                                        Menunggu antrean...
-                                    </div>
-
+                                        class="text-xs text-gray-300 italic font-normal">Menunggu antrean...</div>
                                     <div x-show="loadingStates[req.id]"
                                         class="flex items-center gap-1.5 text-xs text-blue-500 font-bold">
                                         <svg class="animate-spin h-3.5 w-3.5 text-blue-500" fill="none"
@@ -330,10 +569,8 @@
                                             <path class="opacity-75" fill="currentColor"
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                             </path>
-                                        </svg>
-                                        Memeriksa...
+                                        </svg> Memeriksa...
                                     </div>
-
                                     <div x-show="aiResults[req.id]" class="space-y-1">
                                         <div class="flex items-center gap-1">
                                             <template x-if="aiResults[req.id]?.is_valid === 1">
@@ -353,7 +590,6 @@
                                 </td>
                             </tr>
                         </template>
-
                         <template x-if="leaveRequests.length === 0">
                             <tr>
                                 <td colspan="5" class="p-12 text-center text-gray-400 font-medium">Belum ada

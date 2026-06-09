@@ -10,9 +10,14 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        //
+    ->withMiddleware(function (Middleware $middleware) {
+        
+        // 🛠️ PERBAIKAN DI SINI: Arahkan alias secara spesifik ke AuthCompany::class
+        $middleware->alias([
+            'auth.company' => \App\Http\Middleware\AuthCompany::class,
+        ]);
+
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

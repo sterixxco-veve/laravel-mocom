@@ -9,27 +9,62 @@ use Pdf;
 class CompanyAdminController extends Controller
 {
     // 1. HALAMAN UTAMA DASHBOARD HRD / LAB
-    public function dashboard() {
-        // 1. Proteksi Keamanan: Pastikan user yang masuk adalah Admin Company
-        if (session('user_role') !== 'admin_company') return redirect()->route('login');
+   public function dashboard()
+    {
+        // 1. Ambil company_id dari session admin yang sedang login
+        $companyId = session('company_id'); 
+        $baseUrl = env('EXPRESS_API_URL', 'http://127.0.0.1:3000/api');
+        
+        // Safety check jika session kosong
+        if (!$companyId) {
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir.');
+        }
 
-        $companyId = session('company_id');
+       try {
+            // 1. Mengambil data staf khusus company ini (Sudah ada sebelumnya)
+            $staffResponse = Http::get("http://127.0.0.1:3000/api/getAllStaffCompany/{$companyId}");
+            $staffList = $staffResponse->successful() ? $staffResponse->json() : [];
 
-        // 2. Ambil data staff terikat company_id
-        $staffResponse = Http::get(env('EXPRESS_API_URL') . "/getAllStaffCompany/{$companyId}");
-        $staffList = $staffResponse->successful() ? $staffResponse->json() : [];
+            // 2. Mengambil data pengajuan izin khusus company ini (Sudah ada sebelumnya)
+            $leaveResponse = Http::get("http://127.0.0.1:3000/api/getLeaveRequestsCompany/{$companyId}");
+            $allRequests = $leaveResponse->successful() ? $leaveResponse->json() : [];
+            $leaveRequests = collect($allRequests)->where('status', 'pending')->values()->all();
 
-        // 3. Ambil Informasi Detail Profil Perusahaan
-        $companyResponse = Http::get(env('EXPRESS_API_URL') . "/getCompanyDetail/{$companyId}");
-        $companyDetail = $companyResponse->successful() ? $companyResponse->json() : null;
+            // 3. Mengambil detail data company (Sudah ada sebelumnya)
+            $companyResponse = Http::get("http://127.0.0.1:3000/api/getCompanyDetail/{$companyId}");
+            $companyDetail = $companyResponse->successful() ? $companyResponse->json() : null;
 
-        // 4. AMBIL DATA LEAVE REQUESTS (Saringan Gemini AI dari database Express)
-        // Ambil endpoint ini, gunakan tanda petik dua ("") agar variabel companyId terekstrak
-        $leaveResponse = Http::get(env('EXPRESS_API_URL') . "/getLeaveRequestsCompany/{$companyId}");
-        $leaveRequests = $leaveResponse->successful() ? $leaveResponse->json() : [];
+            // ➕ 4. FITUR BARU: Ambil Rekap Total Jam Kerja Mingguan Staf dari Express API
+            $workloadResponse = Http::get("http://127.0.0.1:3000/api/getWeeklyWorkload/{$companyId}");
+            $workloadData = $workloadResponse->successful() ? $workloadResponse->json() : [
+                'overworked' => 0, 'normal' => 0, 'underworked' => 0, 'details' => []
+            ];
 
-        // 5. PERBAIKAN UTAMA: Pastikan 'leaveRequests' tertulis di dalam compact()
-        return view('admin.dashboard', compact('staffList', 'companyDetail', 'leaveRequests'));
+            // ➕ AMBIL LOG AKTIVITAS HARI INI:
+            $todayLogResponse = Http::get("http://127.0.0.1:3000/api/getTodayAttendanceLog/{$companyId}");
+            $todayAttendanceLogs = $todayLogResponse->successful() ? $todayLogResponse->json() : [];
+
+            $shiftResponse = Http::get("{$baseUrl}/getSchedulesByCompanyId/{$companyId}");
+            $shiftMasters = $shiftResponse->successful() ? $shiftResponse->json() : [];
+
+        } catch (\Exception $e) {
+            $shiftMasters = [];
+            $leaveRequests = [];
+            $workloadData = ['overworked' => 0, 'normal' => 0, 'underworked' => 0, 'details' => []];
+            $todayAttendanceLogs = [];
+            $companyDetail = null;
+        }
+
+        // Tambahkan workloadData ke dalam compact
+        return view('admin.dashboard', compact(
+            'staffList', 
+            'leaveRequests', 
+            'companyDetail', 
+            'workloadData', 
+            'todayAttendanceLogs',
+            'shiftMasters' // <-- Variabel ini aman dibaca di sini
+        ));
+        
     }
 
     // 2. MENAMPILKAN FORM TAMBAH STAFF
