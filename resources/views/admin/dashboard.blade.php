@@ -147,9 +147,9 @@
 
         <div x-show="currentTab === 'ai'" x-cloak x-transition x-data="{
             selectedIds: [],
-            leaveRequests: @js($leaveRequests), // Konversi data php array ke js object otomatis
-            aiResults: {}, // Penampung hasil analisis individual per ID ({ id: { is_valid, ai_reason } })
-            loadingStates: {}, // Penampung status loading per ID
+            leaveRequests: @js($leaveRequests),
+            aiResults: {},
+            loadingStates: {},
             isSubmitting: false,
         
             get allIds() {
@@ -164,39 +164,63 @@
                 }
             },
         
-            // Fungsi utama eksekusi analisis otomatis massal
             async runBatchAnalysis() {
-                if (this.selectedIds.length === 0) {
-                    alert('Silakan pilih minimal satu perizinan staf.');
+                const cleanIds = Array.from(this.selectedIds);
+        
+                console.log('⚡ Memproses analisis untuk ID murni:', cleanIds);
+        
+                if (cleanIds.length === 0) {
+                    alert('Silakan pilih minimal satu perizinan staf dengan mencentang checkbox.');
                     return;
                 }
         
-                for (let id of this.selectedIds) {
-                    let targetRequest = this.leaveRequests.find(r => r.id === id);
+                for (let id of cleanIds) {
+                    let targetRequest = this.leaveRequests.find(r => r.id == id);
                     if (!targetRequest) continue;
-        
-                    // Skip jika id ini sudah dianalisis sebelumnya agar menghemat kuota API
                     if (this.aiResults[id]) continue;
         
                     this.loadingStates[id] = true;
+                    this.loadingStates = { ...this.loadingStates };
         
                     try {
+                        // 1. Log objek asli ke konsol untuk memeriksa nama kolom yang benar dari database
+                        console.log(`📦 Struktur data asli untuk ID #${id}:`, targetRequest);
+        
+                        // 2. Deteksi otomatis beberapa kemungkinan nama kolom alasan
+                        let textReason = targetRequest.reason ||
+                            targetRequest.alasan ||
+                            targetRequest.Alasan ||
+                            targetRequest.reason_text ||
+                            '';
+        
+                        // Jika masih tetap kosong, beri pesan peringatan di konsol
+                        if (!textReason) {
+                            console.warn(`⚠️ Peringatan: Kolom alasan tidak ditemukan pada objek ID #${id}. Periksa log struktur data di atas.`);
+                        }
+        
+                        console.log(`🤖 Mengirim alasan ke Express untuk ID #${id}:`, textReason);
+        
                         let response = await fetch('http://127.0.0.1:3000/api/analyze-leave-request', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ reason: targetRequest.reason })
+                            body: JSON.stringify({ reason: textReason })
                         });
+        
                         let data = await response.json();
+                        console.log(`🧠 Respon sukses dari Gemini API untuk ID #${id}:`, data);
+        
                         if (data.success) {
                             this.aiResults[id] = data;
                         } else {
-                            this.aiResults[id] = { is_valid: 0, ai_reason: 'Gagal memproses analisis.' };
+                            this.aiResults[id] = { is_valid: 0, ai_reason: 'Gagal memproses analisis AI.' };
                         }
                     } catch (error) {
-                        console.error(error);
-                        this.aiResults[id] = { is_valid: 0, ai_reason: 'Gagal menghubungi server.' };
+                        console.error('❌ Kegagalan Fetching pada ID ' + id + ':', error);
+                        this.aiResults[id] = { is_valid: 0, ai_reason: 'Koneksi backend gagal terhubung.' };
                     } finally {
                         this.loadingStates[id] = false;
+                        this.loadingStates = { ...this.loadingStates };
+                        this.aiResults = { ...this.aiResults };
                     }
                 }
             },
@@ -259,9 +283,9 @@
                 <table class="w-full text-left border-collapse table-fixed">
                     <thead>
                         <tr
-                            class="bg-slate-50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            <th class="p-4 text-center w-[8%]">Checkbox</th>
-                            <th class="p-4 w-[22%]">Nama Staff</th>
+                            class="bg-slate-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            <th class="p-4 text-center w-[10%]">Checkbox</th>
+                            <th class="p-4 w-[20%]">Nama Staff</th>
                             <th class="p-4 w-[35%]">Alasan</th>
                             <th class="p-4 text-center w-[12%]">Status</th>
                             <th class="p-4 w-[23%]">Hasil Analisis AI</th>
@@ -282,8 +306,8 @@
                                     <div class="text-[11px] text-gray-400 font-mono" x-text="'@'+req.username"></div>
                                 </td>
 
-                                <td class="p-4 text-gray-600 italic font-normal text-xs leading-relaxed max-w-md truncate hover:whitespace-normal"
-                                    x-text="'&ldquo;' + req.reason + '&rdquo;'"></td>
+                                <td class="p-4 text-gray-600 italic font-normal text-xs leading-relaxed truncate hover:whitespace-normal"
+                                    x-text="req.reason"></td>
 
                                 <td class="p-4 text-center">
                                     <span
@@ -310,7 +334,7 @@
                                         Memeriksa...
                                     </div>
 
-                                    <div x-show="aiResults[req.id]" class="space-y-1 animate-in fade-in duration-300">
+                                    <div x-show="aiResults[req.id]" class="space-y-1">
                                         <div class="flex items-center gap-1">
                                             <template x-if="aiResults[req.id]?.is_valid === 1">
                                                 <span
@@ -340,17 +364,16 @@
                 </table>
             </div>
 
-            <div x-show="Object.keys(aiResults).length > 0"
-                class="flex gap-3 justify-end animate-in slide-in-from-bottom duration-300">
+            <div x-show="Object.keys(aiResults).length > 0" class="flex gap-3 justify-end">
                 <button @click="submitBatchDecision('approve')" :disabled="isSubmitting"
                     class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50">
-                    <span x-show="!isSubmitting">✔️ Terima Semua &amp; Kirim Notif</span>
-                    <span x-show="isSubmitting">Memproses Massal...</span>
+                    <span x-show="!isSubmitting">✔️ Terima Semua Terpilih &amp; Kirim Notif</span>
+                    <span x-show="isSubmitting">Memproses...</span>
                 </button>
-                <button @click="submitDecision('reject')" :disabled="isSubmitting"
+                <button @click="submitBatchDecision('reject')" :disabled="isSubmitting"
                     class="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50">
                     <span x-show="!isSubmitting">❌ Tolak Semua Terpilih</span>
-                    <span x-show="isSubmitting">Memproses Massal...</span>
+                    <span x-show="isSubmitting">Memproses...</span>
                 </button>
             </div>
         </div>
