@@ -286,36 +286,56 @@
                 class="bg-slate-50 border border-gray-100 p-6 rounded-2xl mb-6 max-w-2xl shadow-inner">
                 <form
                     @submit.prevent="
-                    isSaving = true;
-                    fetch('http://127.0.0.1:3000/api/insertSchedules', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            company_id: {{ session('company_id') }},
-                            created_by: {{ session('user_id') ?? 1 }},
-                            title: sTitle,
-                            description: sDesc,
-                            start_time: sStart,
-                            end_time: sEnd,
-                            location: sLoc
+                        isSaving = true;
+                        fetch('http://127.0.0.1:3000/api/insertSchedules', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                company_id: {{ session('company_id') }},
+                                created_by: {{ session('user_id') ?? 1 }},
+                                title: sTitle,
+                                description: sDesc,
+                                start_time: sStart,
+                                end_time: sEnd,
+                                location: sLoc
+                            })
                         })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        isSaving = false;
-                        if(data.id) {
-                            alert('Berhasil membuat blueprint master shift baru!');
-                            window.location.reload();
-                        } else {
-                            alert('Gagal memproses data.');
-                        }
-                    })
-                    .catch(err => {
-                        isSaving = false;
-                        console.error(err);
-                        alert('Gagal menghubungi REST API database pusat.');
-                    });
-                "
+                        .then(res => {
+                            if(!res.ok) {
+                                return res.json().then(errData => { throw new Error(errData.error || errData.message || 'Server Bermasalah') });
+                            }
+                            return res.json();
+                        })
+                        .then(data => {
+                            isSaving = false;
+                            if(data.id || data.success) {
+                                alert('Berhasil membuat blueprint master shift baru!');
+                                
+                                // 🛠️ TRIK UTAMA: Ambil ulang data schedule terbaru dari Express API agar tabel langsung ter-update otomatis
+                                fetch('http://127.0.0.1:3000/api/getSchedulesByCompanyId/' + {{ session('company_id') }})
+                                    .then(r => r.json())
+                                    .then(updatedList => {
+                                        // Paksa halaman web memperbarui data array tanpa perlu refresh browser
+                                        window.location.reload();
+                                    });
+
+                                // Kosongkan input form kembali secara otomatis setelah sukses
+                                sTitle = '';
+                                sDesc = '';
+                                sStart = '';
+                                sEnd = '';
+                                sLoc = '';
+                                openCreate = false;
+                            } else {
+                                alert('Gagal memproses data.');
+                            }
+                        })
+                        .catch(err => {
+                            isSaving = false;
+                            console.error('❌ Fetch Error:', err);
+                            alert('Gagal: ' + err.message);
+                        });
+                    "
                     class="space-y-4">
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -381,18 +401,23 @@
                                 <td class="p-4 pl-6 font-mono text-gray-400">#SHIFT-0{{ $shift['id'] }}</td>
                                 <td class="p-4">
                                     <div class="text-gray-900 font-bold">{{ $shift['title'] }}</div>
-                                    @if ($shift['description'])
+                                    @if (!empty($shift['description']))
                                         <div class="text-[11px] text-gray-400 font-normal italic mt-0.5">
                                             {{ $shift['description'] }}</div>
                                     @endif
                                 </td>
-                                <td class="p-4 text-gray-500 font-semibold">📍 {{ $shift['location'] }}</td>
+                                <td class="p-4 text-gray-500 font-semibold">📍
+                                    {{ $shift['location'] ?? 'Default Area' }}</td>
+
                                 <td class="p-4 text-center font-mono text-blue-600 font-bold bg-blue-50/10">
-                                    {{ $shift['jam_masuk'] }} - {{ $shift['jam_pulang'] }} WIB</td>
+                                    {{ $shift['jam_masuk'] ?? ($shift['start_time'] ?? '00:00') }} -
+                                    {{ $shift['jam_pulang'] ?? ($shift['end_time'] ?? '00:00') }} WIB
+                                </td>
+
                                 <td class="p-4 text-center">
                                     <span
                                         class="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md text-xs font-bold font-mono">
-                                        {{ $shift['duration_hours'] }} Jam Kerja
+                                        {{ $shift['duration_hours'] ?? '0' }} Jam Kerja
                                     </span>
                                 </td>
                             </tr>
