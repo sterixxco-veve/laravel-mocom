@@ -16,6 +16,62 @@ class SuperAdminController extends Controller
         $this->expressUrl = env('EXPRESS_API_URL', 'http://127.0.0.1:3000/api');
     }
 
+    public function store(Request $request)
+    {
+        // 1. Validasi Input Form (Sisi Laravel)
+        $request->validate([
+            'company_name'  => 'required|string|max:255',
+            'company_email' => 'required|email', 
+            'password'      => 'required|string|min:6',
+            'phone_number'  => 'required|string|max:20',
+            'address'       => 'required|string',
+        ], [
+            'company_name.required'  => 'Nama perusahaan / institusi wajib diisi.',
+            'company_email.required' => 'Email resmi perusahaan wajib diisi.',
+            'password.required'      => 'Kata sandi login web admin wajib diisi.',
+            'password.min'           => 'Kata sandi minimal harus 6 karakter.',
+            'phone_number.required'  => 'Nomor telepon kontak wajib diisi.',
+            'address.required'       => 'Alamat domisili kantor / pusat lab wajib diisi.',
+        ]);
+
+        try {
+            // 2. TEMBAK HTTP POST ke Endpoint Express /api/registerCompany
+            $targetUrl = "{$this->expressUrl}/registerCompany";
+
+            $response = Http::post($targetUrl, [
+                'company_name' => $request->company_name,
+                'email'        => $request->company_email,
+                'password'     => $request->password, // Disarankan enkripsi di handle node backend atau gunakan bcrypt di sini jika database menyimpan plain-text/hash
+                'phone_number' => $request->phone_number,
+                'address'      => $request->address,
+            ]);
+
+            // 3. Debugging jika Express menolak pendaftaran
+            if (!$response->successful()) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('error', 'Express menolak pendaftaran: ' . ($response->json()['error'] ?? 'Unknown Error'));
+            }
+
+            // 4. Sukses, kembalikan ke Dashboard Utama
+            return redirect()
+                ->route('superadmin.dashboard')
+                ->with('success', 'Akun tenant resmi berhasil didaftarkan di database pusat!');
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Laravel gagal terhubung ke backend Express: ' . $e->getMessage());
+        }
+    }
+
+    public function create()
+    {
+        // Memanggil folder 'superadmin' dan file 'add_company.blade.php'
+        return view('superadmin.add_company'); 
+    }
     public function dashboard()
     {
         try {
