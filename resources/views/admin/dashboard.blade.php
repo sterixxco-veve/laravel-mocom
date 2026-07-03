@@ -52,9 +52,12 @@
         @endif
 
         @if (session('success'))
-            <div
-                class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm font-medium">
-                {{ session('success') }}
+            <div x-data="{ showSuccess: true }" x-show="showSuccess" x-transition
+                class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm font-medium flex justify-between items-center">
+                <span>{{ session('success') }}</span>
+                <button @click="showSuccess = false" class="text-emerald-500 hover:text-emerald-700 font-bold ml-4 cursor-pointer focus:outline-none" title="Tutup">
+                    ✕
+                </button>
             </div>
         @endif
 

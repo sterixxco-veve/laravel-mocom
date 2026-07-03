@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Models\Company;
+use Illuminate\Support\Facades\DB;
 
 class SuperAdminController extends Controller
 {
@@ -84,5 +86,34 @@ class SuperAdminController extends Controller
                 'ERROR_MESSAGE' => $e->getMessage()
             ]);
         }
+    }
+
+    public function create()
+    {
+        return view('superadmin.add_company');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'company_name' => 'required|string|max:150',
+            'email'        => 'required|email|max:100|unique:companies,email|unique:users,email',
+            'password'     => 'required|string|min:6|max:255',
+            'phone_number' => 'required|string|max:100',
+            'address'      => 'required|string|max:100',
+        ]);
+
+        // 1. Simpan data ke tabel companies menggunakan Eloquent
+        $company = Company::create([
+            'company_name' => $request->company_name,
+            'email'        => $request->email,
+            'password'     => $request->password, // Disimpan plain text sesuai format DB/Express
+            'phone_number' => $request->phone_number,
+            'address'      => $request->address,
+            'is_active'    => 1,
+        ]);
+
+        return redirect()->route('superadmin.dashboard')
+            ->with('success', 'Perusahaan ' . $company->company_name . ' dan akun Admin berhasil didaftarkan!');
     }
 }

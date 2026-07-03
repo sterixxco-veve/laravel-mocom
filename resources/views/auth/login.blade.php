@@ -21,7 +21,7 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label text-sm fw-bold">Email atau Username</label>
-                    <input type="text" name="email_or_username" class="form-control" placeholder="Masukkan email atau username" required style="border-radius: 8px; padding: 10px;">
+                    <input type="text" name="email_or_username" value="{{ old('email_or_username') }}" class="form-control" placeholder="Masukkan email atau username" required style="border-radius: 8px; padding: 10px;">
                 </div>
                 
                 <div class="mb-4">

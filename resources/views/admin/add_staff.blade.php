@@ -24,18 +24,18 @@
                 @csrf
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Lengkap Karyawan</label>
-                    <input type="text" name="full_name" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Contoh: Budi Santoso, S.Kom" required>
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Contoh: Budi Santoso, S.Kom" required>
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Username Unik Login</label>
-                    <input type="text" name="username" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="contoh: budi_santoso" required>
+                    <input type="text" name="username" value="{{ old('username') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="contoh: budi_santoso" required>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Alamat Email Aktif</label>
-                        <input type="email" name="email" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="budi@email.com" required>
+                        <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="budi@email.com" required>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 tracking-wider uppercase mb-2">Kata Sandi Akun</label>
@@ -46,9 +46,9 @@
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tingkat Hak Otoritas (Role ID)</label>
                     <select name="role_id" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]">
-                        <option value="2">Staff Utama / Asisten Senior (Role ID 2)</option>
-                        <option value="3">Staff Junior / Asisten Magang (Role ID 3)</option>
-                        <option value="1">Duplikasi Admin Pembantu (Role ID 1)</option>
+                        <option value="2" {{ old('role_id') == '2' ? 'selected' : '' }}>Staff Utama / Asisten Senior (Role ID 2)</option>
+                        <option value="3" {{ old('role_id') == '3' ? 'selected' : '' }}>Staff Junior / Asisten Magang (Role ID 3)</option>
+                        <option value="1" {{ old('role_id') == '1' ? 'selected' : '' }}>Duplikasi Admin Pembantu (Role ID 1)</option>
                     </select>
                 </div>
 

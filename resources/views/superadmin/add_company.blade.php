@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Daftarkan Perusahaan - Superadmin Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="{{ asset('js/phone-validation.js') }}"></script>
 </head>
 <body class="bg-[#FDFDFD] text-[#1E1E24] font-sans antialiased">
     <div class="max-w-2xl mx-auto px-6 py-12">
@@ -24,13 +25,13 @@
                 @csrf
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Perusahaan / Institusi</label>
-                    <input type="text" name="company_name" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Contoh: PT Sejahtera Maju Jaya" required>
+                    <input type="text" name="company_name" value="{{ old('company_name') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Contoh: PT Sejahtera Maju Jaya" required>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Resmi Perusahaan</label>
-                        <input type="email" name="email" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="admin@maju-jaya.com" required>
+                        <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="admin@maju-jaya.com" required>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Kata Sandi Login Web Admin</label>
@@ -40,12 +41,12 @@
 
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nomor Telepon Kontak</label>
-                    <input type="text" name="phone_number" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="021-xxxxxx atau 08xxxx" required>
+                    <input type="text" name="phone_number" value="{{ old('phone_number') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="021-xxxxxx atau 08xxxx" required>
                 </div>
 
                 <div class="mb-6">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Alamat Domisili Kantor / Pusat Lab</label>
-                    <textarea name="address" rows="3" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Tuliskan alamat lengkap perusahaan di sini..." required></textarea>
+                    <textarea name="address" rows="3" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Tuliskan alamat lengkap perusahaan di sini..." required>{{ old('address') }}</textarea>
                 </div>
 
                 <button type="submit" class="w-full bg-[#4361EE] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-sm text-sm">
