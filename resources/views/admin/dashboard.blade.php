@@ -6,6 +6,7 @@
     <title>Admin Dashboard - Panel Kontrol HRD</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         [x-cloak] {
             display: none !important;
@@ -15,7 +16,7 @@
 
 <body class="bg-[#FDFDFD] text-[#1E1E24] font-sans antialiased" x-data="{ currentTab: 'staff' }">
 
-    <nav class="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-3">
             <span class="text-xl font-black tracking-wider text-[#4361EE] uppercase">{{ session('company_name') }}
                 PANEL</span>
@@ -312,15 +313,13 @@
                         .then(data => {
                             isSaving = false;
                             if(data.id || data.success) {
-                                alert('Berhasil membuat blueprint master shift baru!');
-                                
-                                // 🛠️ TRIK UTAMA: Ambil ulang data schedule terbaru dari Express API agar tabel langsung ter-update otomatis
-                                fetch('http://127.0.0.1:3000/api/getSchedulesByCompanyId/' + {{ session('company_id') }})
-                                    .then(r => r.json())
-                                    .then(updatedList => {
-                                        // Paksa halaman web memperbarui data array tanpa perlu refresh browser
-                                        window.location.reload();
-                                    });
+                                Swal.fire({
+                                    title: 'Berhasil!',
+                                    text: 'Berhasil membuat blueprint master shift baru!',
+                                    icon: 'success'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
 
                                 // Kosongkan input form kembali secara otomatis setelah sukses
                                 sTitle = '';
@@ -330,13 +329,13 @@
                                 sLoc = '';
                                 openCreate = false;
                             } else {
-                                alert('Gagal memproses data.');
+                                Swal.fire({ title: 'Gagal!', text: 'Gagal memproses data.', icon: 'error' });
                             }
                         })
                         .catch(err => {
                             isSaving = false;
                             console.error('❌ Fetch Error:', err);
-                            alert('Gagal: ' + err.message);
+                            Swal.fire({ title: 'Gagal!', text: err.message, icon: 'error' });
                         });
                     "
                     class="space-y-4">
@@ -462,7 +461,7 @@
                 console.log('⚡ Memproses analisis untuk ID murni:', cleanIds);
         
                 if (cleanIds.length === 0) {
-                    alert('Silakan pilih minimal satu perizinan staf dengan mencentang checkbox.');
+                    Swal.fire({ title: 'Info', text: 'Silakan pilih minimal satu perizinan staf dengan mencentang checkbox.', icon: 'info' });
                     return;
                 }
         
@@ -502,7 +501,7 @@
         
             async submitBatchDecision(actionType) {
                 if (this.selectedIds.length === 0) {
-                    alert('Silakan tentukan perizinan yang ingin diproses.');
+                    Swal.fire({ title: 'Info', text: 'Silakan tentukan perizinan yang ingin diproses.', icon: 'info' });
                     return;
                 }
         
@@ -525,11 +524,20 @@
                         if (data.success) successCount++;
                     }
         
-                    alert(`Berhasil memproses ${successCount} perizinan staf.`);
-                    window.location.reload();
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: `Berhasil memproses ${successCount} perizinan staf.`,
+                        icon: 'success'
+                    }).then(() => {
+                        window.location.reload();
+                    });
                 } catch (error) {
                     console.error(error);
-                    alert('Terjadi kendala operasional saat memproses keputusan massal.');
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Terjadi kendala operasional saat memproses keputusan massal.',
+                        icon: 'error'
+                    });
                 } finally {
                     this.isSubmitting = false;
                 }

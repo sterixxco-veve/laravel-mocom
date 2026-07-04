@@ -24,18 +24,19 @@
                 @csrf
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Lengkap Karyawan</label>
-                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Contoh: Budi Santoso, S.Kom" required>
+                    <input type="text" name="full_name" value="{{ old('full_name') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Masukkan nama lengkap karyawan" required>
                 </div>
 
                 <div class="mb-4">
                     <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Username Unik Login</label>
-                    <input type="text" name="username" value="{{ old('username') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="contoh: budi_santoso" required>
+                    <input type="text" id="username_display" value="{{ old('username') }}" class="w-full bg-slate-100 border border-gray-200 text-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none" placeholder="Otomatis terisi dari email" disabled>
+                    <input type="hidden" name="username" id="username_hidden" value="{{ old('username') }}">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Alamat Email Aktif</label>
-                        <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="budi@email.com" required>
+                        <input type="email" name="email" id="email_input" value="{{ old('email') }}" class="w-full bg-white border border-gray-200 text-gray-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#4361EE]" placeholder="Masukkan alamat email aktif" required>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 tracking-wider uppercase mb-2">Kata Sandi Akun</label>
@@ -58,5 +59,24 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const emailInput = document.getElementById('email_input');
+            const usernameDisplay = document.getElementById('username_display');
+            const usernameHidden = document.getElementById('username_hidden');
+
+            if (emailInput && usernameDisplay && usernameHidden) {
+                emailInput.addEventListener('blur', function () {
+                    const emailVal = this.value.trim();
+                    if (emailVal) {
+                        const username = emailVal.split('@')[0];
+                        usernameDisplay.value = username;
+                        usernameHidden.value = username;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

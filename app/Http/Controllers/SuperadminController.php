@@ -16,6 +16,38 @@ class SuperAdminController extends Controller
         $this->expressUrl = env('EXPRESS_API_URL', 'http://127.0.0.1:3000/api');
     }
 
+    public function dashboard()
+    {
+        try {
+            // Mengambil data perusahaan langsung dari database menggunakan Eloquent Company model
+            $companies = Company::select('id', 'company_name', 'email', 'phone_number', 'address', 'is_active')
+                ->get()
+                ->toArray();
+
+            $activeCompanies = Company::select('id', 'company_name', 'email', 'phone_number', 'address', 'is_active')
+                ->where('is_active', 1)
+                ->get()
+                ->toArray();
+
+            $totalMitra = count($companies);
+            $waitingLegitimation = 0; 
+
+        } catch (\Exception $e) {
+            $companies = [];
+            $activeCompanies = [];
+            $totalMitra = 0;
+            $waitingLegitimation = 0;
+            session()->now('error', 'Gagal memuat data dari database: ' . $e->getMessage());
+        }
+
+        return view('superadmin.dashboard', compact(
+            'companies', 
+            'activeCompanies',
+            'totalMitra', 
+            'waitingLegitimation'
+        ));
+    }
+
     public function store(Request $request)
     {
         // 1. Validasi Input Form (Sisi Laravel)
@@ -72,29 +104,33 @@ class SuperAdminController extends Controller
         // Memanggil folder 'superadmin' dan file 'add_company.blade.php'
         return view('superadmin.add_company'); 
     }
-    public function dashboard()
+
+    public function deactivate($id)
     {
         try {
-            $response = Http::get("{$this->expressUrl}/getAllCompanies");
-            $companies = $response->successful() ? $response->json() : [];
+            $company = Company::findOrFail($id);
+            $company->is_active = false;
+            $company->save();
 
-            $totalMitra = count($companies);
-            $waitingLegitimation = 0; 
-
+            return redirect()->route('superadmin.dashboard')
+                ->with('success', "Perusahaan {$company->company_name} berhasil dinonaktifkan!");
         } catch (\Exception $e) {
-            $companies = [];
-            $totalMitra = 0;
-            $waitingLegitimation = 0;
-            session()->now('error', 'Gagal tersambung ke backend Node.js.');
+            return back()->withErrors(['msg' => 'Gagal menonaktifkan perusahaan: ' . $e->getMessage()]);
         }
+    }
 
-        // 🛠️ FIX SISI SUPERADMIN: Kembalikan ke view dashboard root milik superadmin/pusat
-        // Gantilah 'admin.dashboard' menjadi target file blade Superadmin kamu yang sebenarnya
-        return view('superadmin.dashboard', compact(
-            'companies', 
-            'totalMitra', 
-            'waitingLegitimation'
-        ));
+    public function activate($id)
+    {
+        try {
+            $company = Company::findOrFail($id);
+            $company->is_active = true;
+            $company->save();
+
+            return redirect()->route('superadmin.dashboard')
+                ->with('success', "Perusahaan {$company->company_name} berhasil diaktifkan kembali!");
+        } catch (\Exception $e) {
+            return back()->withErrors(['msg' => 'Gagal mengaktifkan perusahaan: ' . $e->getMessage()]);
+        }
     }
 
     // PROSES EKSEKUSI PENGADUAN / PENAMBAHAN STAFF BY BACKDOOR SUPERADMIN
@@ -140,6 +176,53 @@ class SuperAdminController extends Controller
             dd([
                 'PESAN' => 'Laravel gagal total mengetuk port 3000. Server Express kemungkinan mati atau salah port.',
                 'ERROR_MESSAGE' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function getStaff($companyId)
+    {
+        try {
+            $staff = DB::table('users')
+                ->where('company_id', $companyId)
+                ->where('role_id', 2) // role_id = 2 is Staff
+                ->select('id', 'company_id', 'full_name', 'username', 'email', 'role_id', 'is_active')
+                ->get();
+
+            return response()->json($staff);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function deactivateStaff($id)
+    {
+        try {
+            DB::table('users')->where('id', $id)->update(['is_active' => false]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Staff berhasil dinonaktifkan.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function activateStaff($id)
+    {
+        try {
+            DB::table('users')->where('id', $id)->update(['is_active' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Staff berhasil diaktifkan kembali.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
             ]);
         }
     }

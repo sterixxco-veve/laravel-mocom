@@ -22,6 +22,11 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     // Proses Pengiriman Form (Submit Data)
     Route::post('/company/store', [SuperAdminController::class, 'store'])->name('store_company');
     Route::post('/company/add-staff-backdoor', [SuperAdminController::class, 'storeStaffByAdmin'])->name('store_staff_backdoor');
+    Route::post('/company/{id}/deactivate', [SuperAdminController::class, 'deactivate'])->name('deactivate_company');
+    Route::post('/company/{id}/activate', [SuperAdminController::class, 'activate'])->name('activate_company');
+    Route::get('/company/{companyId}/staff', [SuperAdminController::class, 'getStaff'])->name('company_staff');
+    Route::post('/staff/{id}/deactivate', [SuperAdminController::class, 'deactivateStaff'])->name('deactivate_staff');
+    Route::post('/staff/{id}/activate', [SuperAdminController::class, 'activateStaff'])->name('activate_staff');
 });
 
 // GRUP ADMIN COMPANY (role_id = 1)

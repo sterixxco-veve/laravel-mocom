@@ -11,7 +11,7 @@
         <div class="mb-8">
             <a href="{{ route('superadmin.dashboard') }}" class="text-sm font-bold text-[#4361EE] hover:underline">⬅️ Kembali ke Dashboard</a>
             <h3 class="text-2xl font-black text-gray-900 mt-4">Pendaftaran Akun Perusahaan Baru</h3>
-            <p class="text-sm text-gray-400 mt-1">Isi data identitas fisik di bawah ini untuk membuatkan akses komparatif *Multi-Company Tenant*.</p>
+            <p class="text-sm text-gray-400 mt-1">Isi data identitas fisik di bawah ini untuk membuatkan akses komparatif *Multi-Company*.</p>
         </div>
 
         @if($errors->any())
@@ -50,7 +50,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-[#4361EE] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-sm text-sm">
-                    🚀 Proses &amp; Daftarkan Akun Tenant Resmi
+                    🚀 Proses &amp; Daftarkan Akun Perusahaan Resmi
                 </button>
             </form>
         </div>
