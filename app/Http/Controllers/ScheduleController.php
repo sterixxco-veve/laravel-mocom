@@ -14,7 +14,7 @@ class ScheduleController extends Controller
         $companyId = Auth::user()->company_id; // Mengambil ID Company dari admin yang login
 
         // Menembak endpoint Express API baru yang sudah kita buat
-        $response = Http::get("http://localhost:3000/api/getSchedulesByCompanyId/{$companyId}");
+        $response = Http::get("https://backend-mocom.vercel.app/api/getSchedulesByCompanyId/{$companyId}");
 
         $schedules = [];
         if ($response->successful()) {
@@ -37,17 +37,17 @@ class ScheduleController extends Controller
 
         // Menyusun Payload Data terstruktur sesuai kebutuhan Express API
         $payload = [
-            'company_id'  => Auth::user()->company_id, // Multi-tenant isolasi
-            'created_by'  => Auth::id(),               // ID Admin pembuat
-            'title'       => $request->title,
+            'company_id' => Auth::user()->company_id, // Multi-tenant isolasi
+            'created_by' => Auth::id(),               // ID Admin pembuat
+            'title' => $request->title,
             'description' => $request->description,
-            'start_time'  => $request->start_time,     // Contoh: "08:00"
-            'end_time'    => $request->end_time,       // Contoh: "16:00"
-            'location'    => $request->location ?? 'Default Area',
+            'start_time' => $request->start_time,     // Contoh: "08:00"
+            'end_time' => $request->end_time,       // Contoh: "16:00"
+            'location' => $request->location ?? 'Default Area',
         ];
 
         // Kirim data ke Node.js Express API
-        $response = Http::post("http://localhost:3000/api/insertSchedules", $payload);
+        $response = Http::post("https://backend-mocom.vercel.app/api/insertSchedules", $payload);
 
         if ($response->successful()) {
             return redirect()->route('schedules.index')->with('success', 'Blueprint Master Shift berhasil ditambahkan!');
@@ -68,17 +68,17 @@ class ScheduleController extends Controller
         ]);
 
         $payload = [
-            'company_id'  => Auth::user()->company_id,
-            'created_by'  => Auth::id(),
-            'title'       => $request->title,
+            'company_id' => Auth::user()->company_id,
+            'created_by' => Auth::id(),
+            'title' => $request->title,
             'description' => $request->description,
-            'start_time'  => $request->start_time,
-            'end_time'    => $request->end_time,
-            'location'    => $request->location,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'location' => $request->location,
         ];
 
         // Kirim PUT request untuk update data spesifik berdasarkan ID
-        $response = Http::put("http://localhost:3000/api/updateSchedule/{$id}", $payload);
+        $response = Http::put("https://backend-mocom.vercel.app/api/updateSchedule/{$id}", $payload);
 
         if ($response->successful()) {
             return redirect()->route('schedules.index')->with('success', 'Master Shift berhasil diperbarui!');

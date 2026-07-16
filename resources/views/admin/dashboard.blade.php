@@ -16,7 +16,8 @@
 
 <body class="bg-[#FDFDFD] text-[#1E1E24] font-sans antialiased" x-data="{ currentTab: 'staff' }">
 
-    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
+    <nav
+        class="sticky top-0 z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-3">
             <span class="text-xl font-black tracking-wider text-[#4361EE] uppercase">{{ session('company_name') }}
                 PANEL</span>
@@ -56,7 +57,9 @@
             <div x-data="{ showSuccess: true }" x-show="showSuccess" x-transition
                 class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm font-medium flex justify-between items-center">
                 <span>{{ session('success') }}</span>
-                <button @click="showSuccess = false" class="text-emerald-500 hover:text-emerald-700 font-bold ml-4 cursor-pointer focus:outline-none" title="Tutup">
+                <button @click="showSuccess = false"
+                    class="text-emerald-500 hover:text-emerald-700 font-bold ml-4 cursor-pointer focus:outline-none"
+                    title="Tutup">
                     ✕
                 </button>
             </div>
@@ -242,7 +245,8 @@
                                     </td>
                                     <td class="p-4 text-gray-500 font-semibold">{{ $log['shift_title'] }}</td>
                                     <td class="p-4 text-center font-mono text-emerald-600 font-bold bg-emerald-50/30">
-                                        {{ $log['jam_masuk'] }}</td>
+                                        {{ $log['jam_masuk'] }}
+                                    </td>
                                     <td
                                         class="p-4 text-center font-mono {{ $log['jam_keluar'] === 'Belum Pulang' ? 'text-amber-600 font-bold bg-amber-50/30' : 'text-slate-600' }}">
                                         {{ $log['jam_keluar'] }}
@@ -291,7 +295,7 @@
                 <form
                     @submit.prevent="
                         isSaving = true;
-                        fetch('http://127.0.0.1:3000/api/insertSchedules', {
+                        fetch('https://backend-mocom.vercel.app/api/insertSchedules', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -405,11 +409,13 @@
                                     <div class="text-gray-900 font-bold">{{ $shift['title'] }}</div>
                                     @if (!empty($shift['description']))
                                         <div class="text-[11px] text-gray-400 font-normal italic mt-0.5">
-                                            {{ $shift['description'] }}</div>
+                                            {{ $shift['description'] }}
+                                        </div>
                                     @endif
                                 </td>
                                 <td class="p-4 text-gray-500 font-semibold">📍
-                                    {{ $shift['location'] ?? 'Default Area' }}</td>
+                                    {{ $shift['location'] ?? 'Default Area' }}
+                                </td>
 
                                 <td class="p-4 text-center font-mono text-blue-600 font-bold bg-blue-50/10">
                                     {{ $shift['jam_masuk'] ?? ($shift['start_time'] ?? '00:00') }} -
@@ -461,7 +467,11 @@
                 console.log('⚡ Memproses analisis untuk ID murni:', cleanIds);
         
                 if (cleanIds.length === 0) {
-                    Swal.fire({ title: 'Info', text: 'Silakan pilih minimal satu perizinan staf dengan mencentang checkbox.', icon: 'info' });
+                    Swal.fire({
+                        title: 'Info',
+                        text: 'Silakan pilih minimal satu perizinan staf dengan mencentang checkbox.',
+                        icon: 'info'
+                    });
                     return;
                 }
         
@@ -474,17 +484,23 @@
                     this.loadingStates = { ...this.loadingStates };
         
                     try {
+                        // 🔥 PERBAIKAN 1: Amankan pembacaan teks alasan dari database Laravel (antisipasi nama kolom)
                         let textReason = targetRequest.reason || targetRequest.alasan || targetRequest.Alasan || '';
         
-                        let response = await fetch('http://127.0.0.1:3000/api/analyze-leave-request', {
+                        let response = await fetch('https://backend-mocom.vercel.app/api/analyze-leave-request', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ reason: textReason })
                         });
         
                         let data = await response.json();
-                        if (data.success) {
-                            this.aiResults[id] = data;
+        
+                        // 🔥 PERBAIKAN 2: Ubah validasi agar tidak bergantung hanya pada properti data.success
+                        if (response.ok && data) {
+                            this.aiResults[id] = {
+                                is_valid: data.is_valid !== undefined ? data.is_valid : (data.success ? 1 : 0),
+                                ai_reason: data.ai_reason || 'Analisis selesai.'
+                            };
                         } else {
                             this.aiResults[id] = { is_valid: 0, ai_reason: 'Gagal memproses analisis AI.' };
                         }
@@ -511,7 +527,7 @@
                 try {
                     for (let id of this.selectedIds) {
                         let targetAnalysis = this.aiResults[id];
-                        let response = await fetch('http://127.0.0.1:3000/api/respond-leave-request', {
+                        let response = await fetch('https://backend-mocom.vercel.app/api/respond-leave-request', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({

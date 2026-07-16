@@ -63,7 +63,8 @@
     }
 }">
 
-    <nav class="sticky top-0 z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
+    <nav
+        class="sticky top-0 z-50 bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shadow-sm">
         <div class="flex items-center gap-3">
             <span class="text-xl font-black tracking-wider text-[#4361EE]">MOCOM CENTRAL</span>
             <span class="bg-red-50 text-red-500 text-xs px-2.5 py-1 rounded-full font-bold">SUPERADMIN</span>
@@ -84,7 +85,9 @@
             <div x-data="{ showSuccess: true }" x-show="showSuccess" x-transition
                 class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-sm font-medium flex justify-between items-center">
                 <span>{{ session('success') }}</span>
-                <button @click="showSuccess = false" class="text-emerald-500 hover:text-emerald-700 font-bold ml-4 cursor-pointer focus:outline-none" title="Tutup">
+                <button @click="showSuccess = false"
+                    class="text-emerald-500 hover:text-emerald-700 font-bold ml-4 cursor-pointer focus:outline-none"
+                    title="Tutup">
                     ✕
                 </button>
             </div>
@@ -96,8 +99,7 @@
                 class="text-xs font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer font-sans">
                 🏢 Manajemen Perusahaan
             </button>
-            <button @click="subTab = 'staff_intervention'"
-                :class="subTab === 'staff_intervention' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
+            <button @click="subTab = 'staff_intervention'" :class="subTab === 'staff_intervention' ? 'bg-blue-50 text-[#4361EE] border-blue-100' :
                     'text-gray-400 border-transparent'"
                 class="text-xs font-bold px-4 py-2.5 rounded-xl border transition shadow-sm cursor-pointer font-sans">
                 👥 Intervensi Data Karyawan
@@ -129,30 +131,39 @@
                     </thead>
                     <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
                         @forelse($companies as $company)
-                            <tr class="hover:bg-slate-50/50 transition {{ !$company['is_active'] ? 'opacity-65 bg-slate-50/20' : '' }}">
+                            <tr
+                                class="hover:bg-slate-50/50 transition {{ !$company['is_active'] ? 'opacity-65 bg-slate-50/20' : '' }}">
                                 <td class="p-4 pl-6 font-mono text-gray-400">#{{ $company['id'] }}</td>
                                 <td class="p-4 text-gray-900 font-bold flex items-center gap-2">
                                     <span>{{ $company['company_name'] }}</span>
                                     @if(!$company['is_active'])
-                                        <span class="bg-red-50 text-red-500 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>
+                                        <span
+                                            class="bg-red-50 text-red-500 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>
                                     @endif
                                 </td>
                                 <td class="p-4 text-[#4361EE] font-semibold">{{ $company['email'] }}</td>
                                 <td class="p-4 text-gray-500 font-mono">{{ $company['phone_number'] }}</td>
                                 <td class="p-4 text-gray-400 max-w-xs truncate" title="{{ $company['address'] }}">
-                                    {{ $company['address'] }}</td>
+                                    {{ $company['address'] }}
+                                </td>
                                 <td class="p-4 text-center">
                                     @if($company['is_active'])
-                                        <form action="{{ route('superadmin.deactivate_company', $company['id']) }}" method="POST" class="inline">
+                                        <form action="{{ route('superadmin.deactivate_company', $company['id']) }}"
+                                            method="POST" class="inline">
                                             @csrf
-                                            <button type="button" onclick="confirmDeactivate(this)" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer" title="Nonaktifkan Perusahaan">
+                                            <button type="button" onclick="confirmDeactivate(this)"
+                                                class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                                title="Nonaktifkan Perusahaan">
                                                 🛑 Nonaktifkan
                                             </button>
                                         </form>
                                     @else
-                                        <form action="{{ route('superadmin.activate_company', $company['id']) }}" method="POST" class="inline">
+                                        <form action="{{ route('superadmin.activate_company', $company['id']) }}" method="POST"
+                                            class="inline">
                                             @csrf
-                                            <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer" title="Aktifkan Kembali Perusahaan">
+                                            <button type="submit"
+                                                class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                                title="Aktifkan Kembali Perusahaan">
                                                 ✅ Aktifkan
                                             </button>
                                         </form>
@@ -180,8 +191,7 @@
                 <p class="text-xs text-gray-400 mb-4">Pilih perusahaan untuk memonitor list staff aktif atau melakukan
                     injeksi akun staff baru jika aplikasi sisi admin mengalami kendala teknis.</p>
 
-                <select x-model="selectedCompany"
-                    @change="if(selectedCompany) { 
+                <select x-model="selectedCompany" @change="if(selectedCompany) { 
                         loading = true; 
                         staffList = [];
                         fetch('/superadmin/company/' + selectedCompany + '/staff')
@@ -234,8 +244,7 @@
                 </div>
 
                 <div x-show="showForm" x-transition x-cloak
-                    class="bg-amber-50/30 border border-amber-200/70 rounded-2xl p-6 mb-6 max-w-xl shadow-inner"
-                    x-data="{
+                    class="bg-amber-50/30 border border-amber-200/70 rounded-2xl p-6 mb-6 max-w-xl shadow-inner" x-data="{
                         formData: {
                             full_name: '',
                             username: '',
@@ -250,10 +259,9 @@
                         ⚠️ EMERGENCY BYPASS SUPERADMIN CONTROL
                     </div>
 
-                    <form
-                        @submit.prevent="
+                    <form @submit.prevent="
                         isSending = true;
-                        fetch('http://127.0.0.1:3000/api/superadmin/addStaff', {
+                        fetch('https://backend-mocom.vercel.app/api/superadmin/addStaff', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -289,8 +297,7 @@
                             console.error(err);
                             Swal.fire({ title: 'Koneksi Gagal!', text: 'Koneksi ke server Express gagal.', icon: 'error' });
                         });
-                    "
-                        class="space-y-4">
+                    " class="space-y-4">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -338,8 +345,8 @@
 
                 <div x-show="loading" class="text-center py-10 text-xs text-gray-400 font-medium">
                     <svg class="animate-spin h-5 w-5 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                            stroke-width="4"></circle>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
                         <path class="opacity-75" fill="currentColor"
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                         </path>
@@ -360,22 +367,26 @@
                         </thead>
                         <tbody class="text-sm font-medium text-gray-700 divide-y divide-gray-50">
                             <template x-for="staff in staffList" :key="staff.id">
-                                <tr class="hover:bg-slate-50/50 transition" :class="!staff.is_active ? 'opacity-65 bg-slate-50/20' : ''">
+                                <tr class="hover:bg-slate-50/50 transition"
+                                    :class="!staff.is_active ? 'opacity-65 bg-slate-50/20' : ''">
                                     <td class="p-4 text-gray-900 font-bold flex items-center gap-2">
                                         <span x-text="staff.full_name"></span>
                                         <template x-if="!staff.is_active">
-                                            <span class="bg-red-50 text-red-500 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>
+                                            <span
+                                                class="bg-red-50 text-red-500 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Nonaktif</span>
                                         </template>
                                     </td>
                                     <td class="p-4 text-blue-600 font-semibold" x-text="staff.email"></td>
                                     <td class="p-4 text-center">
                                         <template x-if="staff.is_active">
-                                            <button @click="toggleStaff(staff.id, false)" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
+                                            <button @click="toggleStaff(staff.id, false)"
+                                                class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
                                                 🛑 Nonaktifkan
                                             </button>
                                         </template>
                                         <template x-if="!staff.is_active">
-                                            <button @click="toggleStaff(staff.id, true)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
+                                            <button @click="toggleStaff(staff.id, true)"
+                                                class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
                                                 ✅ Aktifkan
                                             </button>
                                         </template>
@@ -383,7 +394,7 @@
                                 </tr>
                             </template>
 
-                             <tr x-show="staffList.length === 0">
+                            <tr x-show="staffList.length === 0">
                                 <td colspan="4"
                                     class="p-12 text-center text-gray-400 italic text-xs bg-white font-medium">
                                     Perusahaan ini belum memiliki atau menginputkan satu pun staff aktif di

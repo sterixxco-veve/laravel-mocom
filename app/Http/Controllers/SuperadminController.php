@@ -13,21 +13,23 @@ class SuperAdminController extends Controller
 
     public function __construct()
     {
-        $this->expressUrl = env('EXPRESS_API_URL', 'http://127.0.0.1:3000/api');
+        $this->expressUrl = env('EXPRESS_API_URL', 'https://backend-mocom.vercel.app/api');
     }
 
     public function dashboard()
     {
         try {
-            // Mengambil data perusahaan langsung dari database menggunakan Eloquent Company model
-            $companies = Company::select('id', 'company_name', 'email', 'phone_number', 'address', 'is_active')
-                ->get()
-                ->toArray();
+            // 1. Tembak API Express untuk mendapatkan seluruh data perusahaan dari database pusat
+            $response = Http::get("{$this->expressUrl}/getAllCompanies");
+            
+            // Ambil data array JSON jika request sukses
+            $companies = $response->successful() ? $response->json() : [];
 
-            $activeCompanies = Company::select('id', 'company_name', 'email', 'phone_number', 'address', 'is_active')
-                ->where('is_active', 1)
-                ->get()
-                ->toArray();
+            // 2. Filter perusahaan yang aktif secara dinamis dari koleksi data Express
+            // (Antisipasi jika field 'is_active' belum ada, kita beri default true/1)
+            $activeCompanies = collect($companies)->filter(function ($company) {
+                return isset($company['is_active']) ? $company['is_active'] == 1 : true;
+            })->values()->all();
 
             $totalMitra = count($companies);
             $waitingLegitimation = 0; 
@@ -37,7 +39,7 @@ class SuperAdminController extends Controller
             $activeCompanies = [];
             $totalMitra = 0;
             $waitingLegitimation = 0;
-            session()->now('error', 'Gagal memuat data dari database: ' . $e->getMessage());
+            session()->now('error', 'Gagal memuat data dari API Express: ' . $e->getMessage());
         }
 
         return view('superadmin.dashboard', compact(
@@ -146,7 +148,7 @@ class SuperAdminController extends Controller
 
         try {
             // Kita satukan URL secara manual dan presisi agar tidak terjadi salah alamat/double /api
-            $targetUrl = "http://127.0.0.1:3000/api/superadmin/addStaff";
+            $targetUrl = "https://backend-mocom.vercel.app/api/superadmin/addStaff";
             
             // Kirim request sebagai JSON agar lebih universal diterima body-parser Express standar
             $response = Http::post($targetUrl, [
@@ -183,47 +185,21 @@ class SuperAdminController extends Controller
     public function getStaff($companyId)
     {
         try {
-            $staff = DB::table('users')
-                ->where('company_id', $companyId)
-                ->where('role_id', 2) // role_id = 2 is Staff
-                ->select('id', 'company_id', 'full_name', 'username', 'email', 'role_id', 'is_active')
-                ->get();
-
-            return response()->json($staff);
+            // 🚀 Tembak langsung endpoint Express API pusat yang sudah kamu siapkan sebelumnya
+            $response = Http::get("https://backend-mocom.vercel.app/api/getUsersByCompanyId/{$companyId}");
+            
+            if ($response->successful()) {
+                // Ambil data array dari Express
+                $staffList = $response->json();
+                
+                // Mengembalikan respons JSON murni ke Alpine.js frontend
+                return response()->json($staffList);
+            }
+            
+            return response()->json(['error' => 'Gagal menarik data dari server Express pusat.'], 400);
+            
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    public function deactivateStaff($id)
-    {
-        try {
-            DB::table('users')->where('id', $id)->update(['is_active' => false]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Staff berhasil dinonaktifkan.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    public function activateStaff($id)
-    {
-        try {
-            DB::table('users')->where('id', $id)->update(['is_active' => true]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Staff berhasil diaktifkan kembali.'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ]);
+            return response()->json(['error' => 'Koneksi Laravel ke Express gagal: ' . $e->getMessage()], 500);
         }
     }
 }
